@@ -1,34 +1,37 @@
 import json
 
+import plotly
+import plotly.graph_objects
 from django.shortcuts import render
 
 from .forms import JSONUploadForm
 
 
 def index(request):
-    rectangles = []
+    graph_div = None
+
     if request.method == "POST":
         form = JSONUploadForm(request.POST, request.FILES)
         if form.is_valid():
             file = form.cleaned_data["json_file"]
             data = json.load(file)
 
-            for obj in data:
-                min_x = obj["coordinates"]["min"]["x"]
-                min_y = obj["coordinates"]["min"]["y"]
-                max_x = obj["coordinates"]["max"]["x"]
-                max_y = obj["coordinates"]["max"]["y"]
+            fig = plotly.graph_objects.Figure()
 
-                rectangles.append(
-                    {
-                        "x": min_x,
-                        "y": min_y,
-                        "width": max_x - min_x,
-                        "height": max_y - min_y,
-                        "label": obj["coordinates"]["family_name"],
-                    }
-                )
+            for obj in data:
+                coordinates = obj["coordinates"]
+                min_coordinates = coordinates["min"]
+                max_coordinates = coordinates["max"]
+
+                min_x = min_coordinates["x"]
+                min_y = min_coordinates["y"]
+                max_x = max_coordinates["x"]
+                max_y = max_coordinates["y"]
+
+                fig.add_shape(type="rect", x0=min_x, x1=max_x, y0=min_y, y1=max_y)
+
+            graph_div = plotly.offline.plot(fig, auto_open=False, output_type="div")
     else:
         form = JSONUploadForm()
 
-    return render(request, "index.html", {"form": form, "rectangles": rectangles})
+    return render(request, "index.html", {"form": form, "graph": graph_div})
