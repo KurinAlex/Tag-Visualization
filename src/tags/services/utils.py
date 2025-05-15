@@ -1,3 +1,7 @@
+"""
+Utility functions
+"""
+
 import random
 from typing import Sequence
 
@@ -6,14 +10,14 @@ from .geometry import Rectangle
 
 def random_float(a: float, b: float):
     """
-    Get random float number in range [a, b).
+    Get random float number in range [`a`, `b`).
     """
     return random.random() * (b - a) + a
 
 
 def get_bounding_rectangle(rectangles: Sequence[Rectangle]) -> Rectangle:
     """
-    Get minimal rectangle, which completely contains specified rectangles.
+    Get minimal rectangle, which completely contains `rectangles` inside.
     """
     x0 = min(map(lambda x: x.x0, rectangles))
     x1 = max(map(lambda x: x.x1, rectangles))
