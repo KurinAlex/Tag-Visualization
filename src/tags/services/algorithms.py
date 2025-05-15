@@ -22,10 +22,9 @@ class SimulatedAnnealing:
         Penalty for object overlap.
     distance_penalty : float
         Penalty for distance to related object.
-    random_step_min : float
-        Lower bound of random step value.
-    random_step_max : float
-        Upper bound of random step value.
+    random_step_scale : float
+        Proportion between maximum random step size and size of bounding rectangle of all objects.
+        (needed for optimizing step size for different scales)
     initial_temperature: float
         Initial temperature on algorithm start.
     temperature_relax : float
@@ -36,9 +35,8 @@ class SimulatedAnnealing:
 
     overlap_penalty: float = 100_000
     distance_penalty: float = 100
-    random_step_min: float = -10
-    random_step_max: float = 10
-    initial_temperature: float = 0.999
+    random_step_scale: float = 0.1
+    initial_temperature: float = 100
     temperature_relax: float = 0.999
     steps: int = 5000
 
@@ -62,7 +60,7 @@ class SimulatedAnnealing:
 
         return penalty
 
-    def get_random_step(self, tag: Rectangle):
+    def get_random_step(self, tag: Rectangle, max_x_step: float, max_y_step: float):
         """
         Get random tag transition value.
 
@@ -82,15 +80,15 @@ class SimulatedAnnealing:
 
         Args:
             tag: Tag, for which transition is calculated.
+            max_x_step: Max value of x axis random step.
+            max_y_step: Max value of y axis random step.
 
         Returns:
             Tuple of (dx, dy) with corresponding x and y transition values.
         """
 
-        random_step = utils.random_float(self.random_step_min, self.random_step_max)
-
         if random.randint(0, 1) == 0:  # chose to snap horizontally
-            dx = random_step
+            dx = utils.random_float(-max_x_step, max_x_step)
             dy = random.choice(
                 [
                     tag.related.y0 - tag.y0,  # bottom-to-bottom
@@ -100,7 +98,7 @@ class SimulatedAnnealing:
                 ]
             )
         else:  # chose to snap vertically
-            dy = random_step
+            dy = utils.random_float(-max_y_step, max_y_step)
             dx = random.choice(
                 [
                     tag.related.x0 - tag.x0,  # left-to-left
@@ -113,7 +111,7 @@ class SimulatedAnnealing:
         return dx, dy
 
     @staticmethod
-    def get_probability(old_cost, new_cost, temperature):
+    def get_probability(old_cost: float, new_cost: float, temperature: float):
         """
         Simulated annealing probability function implementation.
         Shows the likelihood of transition to new state.
@@ -124,8 +122,8 @@ class SimulatedAnnealing:
         self,
         target_objects: Sequence[Rectangle],
         other_objects: Sequence[Rectangle],
-        tag_width_scale: float = 0.5,
-        tag_height_scale: float = 0.5,
+        tag_width_scale: float = 0.25,
+        tag_height_scale: float = 0.25,
     ) -> list[Rectangle]:
         """
         Run simulated annealing algorithm.
@@ -140,6 +138,13 @@ class SimulatedAnnealing:
             tags: List of places tags rectangles.
             Their `related` fields are set to corresponding related objects.
         """
+        if not target_objects:
+            return []
+
+        # Calculate maximum value for random step size.
+        bounds = utils.get_bounding_rectangle(target_objects)
+        max_x_step = self.random_step_scale * bounds.width
+        max_y_step = self.random_step_scale * bounds.height
 
         # Create tags rectangles with starting positions above corresponding objects.
         tags: list[Rectangle] = []
@@ -168,7 +173,7 @@ class SimulatedAnnealing:
             old_cost = self.get_cost(tag, others)
 
             # Apply random transition
-            dx, dy = self.get_random_step(tag)
+            dx, dy = self.get_random_step(tag, max_x_step, max_y_step)
             tag.move(dx, dy)
 
             # Calculate new cost
