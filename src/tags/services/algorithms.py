@@ -35,10 +35,10 @@ class SimulatedAnnealing:
 
     overlap_penalty: float = 100_000
     distance_penalty: float = 100
-    random_step_scale: float = 0.1
+    random_step_scale: float = 0.5
     initial_temperature: float = 100
     temperature_relax: float = 0.999
-    steps: int = 5000
+    steps: int = 5_000
 
     def get_cost(self, tag: Rectangle, others: Sequence[Rectangle]) -> float:
         """

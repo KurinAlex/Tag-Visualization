@@ -7,12 +7,12 @@ import json
 from .geometry import Rectangle
 
 
-def parse(file: str, family_name="KIT(DS)1") -> tuple[list[Rectangle], list[Rectangle]]:
+def parse(fp, family_name: str = "KIT(DS)1") -> tuple[list[Rectangle], list[Rectangle]]:
     """
     Parses input objects annotation file.
 
     Args:
-        file: File name.
+        fp: File-like object.
         family_name: Objects of interest family name.
 
     Returns:
@@ -23,7 +23,7 @@ def parse(file: str, family_name="KIT(DS)1") -> tuple[list[Rectangle], list[Rect
     target_objects = []
     other_objects = []
 
-    data = json.load(file)
+    data = json.load(fp)
 
     for obj in data:
         label = str(obj["id"])
