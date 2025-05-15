@@ -1,5 +1,7 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>JSON Rectangle Viewer</title>
     <style>
@@ -32,7 +34,7 @@
             flex: 1;
             width: 100%;
         }
-        
+
         .graph-content div {
             height: 100%;
         }
@@ -102,21 +104,22 @@
 
 <body>
     {% if graph %}
-        <div class="container">
-            <a href="{% url 'index' %}" class="back-button">← Back to Upload</a>
-            <div class="graph-content">
-                {{ graph|safe }}
-            </div>
+    <div class="container">
+        <a href="{% url 'index' %}" class="back-button">← Back to Upload</a>
+        <div class="graph-content">
+            {{ graph|safe }}
         </div>
+    </div>
     {% else %}
-        <div class="form-wrapper">
-            <h1>Upload JSON File</h1>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ form }}
-                <button type="submit">Upload</button>
-            </form>
-        </div>
+    <div class="form-wrapper">
+        <h1>Upload JSON File</h1>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit">Upload</button>
+        </form>
+    </div>
     {% endif %}
 </body>
+
 </html>
