@@ -2,7 +2,7 @@
 Django views
 """
 
-from django.http import HttpRequest, HttpResponse
+from django import http
 from django.shortcuts import render
 
 from .forms import JSONUploadForm
@@ -10,7 +10,7 @@ from .services import parse, plot
 from .services.algorithms import SimulatedAnnealing
 
 
-def index(request: HttpRequest) -> HttpResponse:
+def index(request: http.HttpRequest) -> http.HttpResponse:
     """
     Index page logic.
     """
@@ -22,7 +22,14 @@ def index(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             file = form.cleaned_data["json_file"]
 
-            target_objects, other_objects = parse.parse(file)
+            try:
+                target_objects, other_objects = parse.parse(file)
+            except (KeyError, ValueError):
+                return http.HttpResponseBadRequest(
+                    """Input JSON annotation contains errors.
+                    Maybe some fields missing or values have wrong type."""
+                )
+
             tags = SimulatedAnnealing().run(target_objects, other_objects)
             graph = plot.get_plot_div(tags, other_objects)
     else:

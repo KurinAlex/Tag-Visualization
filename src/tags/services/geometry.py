@@ -34,6 +34,13 @@ class Rectangle:
     related: Self = None
     label: str = None
 
+    def __post_init__(self):
+        if self.x0 > self.x1:
+            raise ValueError("Left bound must not be bigger than right bound.")
+
+        if self.y0 > self.y1:
+            raise ValueError("Bottom bound must not be bigger than top bound.")
+
     @property
     def center_x(self) -> float:
         """
