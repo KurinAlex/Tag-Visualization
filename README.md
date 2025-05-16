@@ -24,7 +24,13 @@
     python manage.py runserver
     ```
 
-1. Application will be automatically opened on localhost port 8000 in your default browser.
+1. Application will be run on localhost (usually on port 8000). Anyway, application URL will be shown in console in format:
+
+    ```bash
+    Starting development server at http://127.0.0.1:{port}/
+    ```
+
+1. Open specified application URL in your browser.
 
 1. For running unit tests run:
 
