@@ -43,26 +43,7 @@ class SimulatedAnnealingTest(TestCase):
                 self.assertAlmostEqual(tag.width, tag.related.width * self.tag_width_scale)
                 self.assertAlmostEqual(tag.height, tag.related.height * self.tag_height_scale)
 
-                # Assert horizontal or vertical alignment with related object
-                self.assertTrue(
-                    any(abs(v) < 1e-7 for v in self.get_alignment_differences(tag, tag.related))
-                )
-
                 # Assert non-overlapping results
                 for o in target_objects + other_objects + tags:
                     if tag is not o:
                         self.assertFalse(tag.overlaps(o))
-
-    @staticmethod
-    def get_alignment_differences(rect1, rect2):
-        """
-        Get differences in all possible vertical and horizontal alignments between two rectangles.
-        """
-
-        for x1 in [rect1.x0, rect1.x1]:
-            for x2 in [rect2.x0, rect2.x1]:
-                yield x2 - x1
-
-        for y1 in [rect1.y0, rect1.y1]:
-            for y2 in [rect2.y0, rect2.y1]:
-                yield y2 - y1

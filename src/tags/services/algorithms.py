@@ -25,6 +25,8 @@ class SimulatedAnnealing:
     random_step_scale : float
         Proportion between maximum random step size and size of bounding rectangle of all objects.
         (needed for optimizing step size for different scales)
+    snap_probability : float
+        Probability of tag snapping to another random tag during step.
     initial_temperature: float
         Initial temperature on algorithm start.
     temperature_relax : float
@@ -34,11 +36,12 @@ class SimulatedAnnealing:
     """
 
     overlap_penalty: float = 100_000
-    distance_penalty: float = 100
+    distance_penalty: float = 10_000
     random_step_scale: float = 0.5
+    snap_probability: float = 0.5
     initial_temperature: float = 100
     temperature_relax: float = 0.999
-    steps: int = 5_000
+    steps: int = 6000
 
     def get_cost(self, tag: Rectangle, others: Sequence[Rectangle]) -> float:
         """
@@ -60,26 +63,21 @@ class SimulatedAnnealing:
 
         return penalty
 
-    def get_random_step(self, tag: Rectangle, max_x_step: float, max_y_step: float):
+    def get_random_step(
+        self, tag: Rectangle, tags: Sequence[Rectangle], max_x_step: float, max_y_step: float
+    ):
         """
         Get random tag transition value.
 
         Implementation details:
-            Random transition is calculated by firstly
-            choosing to snap tag to related object horizontally or vertically:
-                1:
-                    If was decided to snap horizontally,
-                    x transition is chosen randomly from range
-                    and y transition is chosen randomly from
-                    possible horizontal snappings (bottom to bottom, bottom to top etc).
-                2.
-                    Analogously, if was decoded to snap vertically
-                    y transition is chosen randomly from range
-                    and x transition is chosen randomly from
-                    possible snappings (left to left, left to right etc)
+            For each x and y movement it is decided with probability `self.snap_probability`
+            whether to snap to some other random tag.
+            If yes, transition value is just difference between chosen and current tag boundary values.
+            Else, random step is applied.
 
         Args:
             tag: Tag, for which transition is calculated.
+            tags: All available tags.
             max_x_step: Max value of x axis random step.
             max_y_step: Max value of y axis random step.
 
@@ -87,26 +85,21 @@ class SimulatedAnnealing:
             Tuple of (dx, dy) with corresponding x and y transition values.
         """
 
-        if random.randint(0, 1) == 0:  # chose to snap horizontally
+        if random.random() < self.snap_probability:
+            # Snap vertically to random tag
+            other_tag = random.choice([other for other in tags if other is not tag])
+            dx = random.choice([other_tag.x0 - tag.x0, other_tag.x1 - tag.x1])
+        else:
+            # Do random x step
             dx = utils.random_float(-max_x_step, max_x_step)
-            dy = random.choice(
-                [
-                    tag.related.y0 - tag.y0,  # bottom-to-bottom
-                    tag.related.y0 - tag.y1,  # bottom-to-top
-                    tag.related.y1 - tag.y0,  # top-to-bottom
-                    tag.related.y1 - tag.y1,  # top-to-top
-                ]
-            )
-        else:  # chose to snap vertically
+
+        if random.random() < self.snap_probability:
+            # Snap horizontally to random tag
+            other_tag = random.choice([other for other in tags if other is not tag])
+            dy = random.choice([other_tag.y0 - tag.y0, other_tag.y1 - tag.y1])
+        else:
+            # Do random y step
             dy = utils.random_float(-max_y_step, max_y_step)
-            dx = random.choice(
-                [
-                    tag.related.x0 - tag.x0,  # left-to-left
-                    tag.related.x0 - tag.x1,  # left-to-right
-                    tag.related.x1 - tag.x0,  # right-to-left
-                    tag.related.x1 - tag.x1,  # right-to-right
-                ]
-            )
 
         return dx, dy
 
@@ -173,7 +166,7 @@ class SimulatedAnnealing:
             old_cost = self.get_cost(tag, others)
 
             # Apply random transition
-            dx, dy = self.get_random_step(tag, max_x_step, max_y_step)
+            dx, dy = self.get_random_step(tag, tags, max_x_step, max_y_step)
             tag.move(dx, dy)
 
             # Calculate new cost
